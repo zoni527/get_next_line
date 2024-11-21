@@ -32,13 +32,11 @@
 static char	*flush_till_index(t_buffer *buffer, size_t index);
 static void	read_into_buffer(t_buffer *buffer);
 static char	*store_buffer_and_append_next_line(t_buffer *buffer);
-static void	move_buffer_back(char *buffer, size_t offset);
+static void	move_buffer_back(t_buffer *buffer, size_t offset);
 
 char	*get_next_line(int fd)
 {
 	static t_buffer	buffer;
-	char			*next_line;
-	char			*storage;
 	ssize_t			newline_index;
 
 	if (!buffer.fd)
@@ -69,7 +67,7 @@ static char	*store_buffer_and_append_next_line(t_buffer *buffer)
 	next_line = get_next_line(buffer->fd);
 	if (!next_line)
 		return (free_ptr(storage));
-	return (strjoin_and_free(next_line, storage));
+	return (strjoin_and_free(storage, next_line));
 }
 
 static void	read_into_buffer(t_buffer *buffer)
@@ -85,19 +83,19 @@ static void	read_into_buffer(t_buffer *buffer)
 		buffer->eof = 1;
 }
 
-static void	move_buffer_back(char *buffer, size_t offset)
+static void	move_buffer_back(t_buffer *buffer, size_t offset)
 {
 	size_t	i;
 
+	if (offset == 0)
+		return ;
 	i = 0;
-	while (i < BUFFER_SIZE - offset)
+	while (i < buffer->bytes_used - offset)
 	{
-		buffer[i] = buffer[offset + i];
+		buffer->memory[i] = buffer->memory[offset + i];
 		i++;
 	}
-	i = BUFFER_SIZE - offset;
-	while (i < BUFFER_SIZE)
-		buffer[i++] = '\0';
+	buffer->bytes_used -= offset;
 }
 
 static char	*flush_till_index(t_buffer *buffer, size_t index)
@@ -111,6 +109,6 @@ static char	*flush_till_index(t_buffer *buffer, size_t index)
 		return (NULL);
 	ft_memmove(next_line, buffer->memory, index);
 	next_line[index] = '\0';
-	move_buffer_back(buffer->memory, index);
+	move_buffer_back(buffer, index);
 	return (next_line);
 }

@@ -23,7 +23,7 @@ ssize_t	char_index(const char *buffer, char c)
 	size_t	i;
 
 	i = 0;
-	while (buffer[++i])
+	while (buffer[i])
 	{
 		if (buffer[i] == c)
 			return (i);
