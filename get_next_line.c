@@ -6,74 +6,111 @@
 /*   By: jvarila <jvarila@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 11:47:36 by jvarila           #+#    #+#             */
-/*   Updated: 2024/11/20 11:51:23 by jvarila          ###   ########.fr       */
+/*   Updated: 2024/11/21 13:03:49 by jvarila          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
+#include <stdio.h>
+#include <sys/types.h>
 
-	// Check whether the buffer contains a new line. If yes, 
-	// return everything until and including that new line,
-	// and move any remaining data back.
+// Check whether the buffer contains a new line. If yes, 
+// return everything until and including that new line,
+// and move any remaining data back.
 
-	// If no new line was found, attempt filling the buffer
-	// and call function again.
+// If no new line was found, attempt filling the buffer
+// and call function again.
 
-	// If buffer is full either return NULL for error or create
-	// extra buffers for extending the search area dynamically
-	// and call get_next_line again
+// If the buffer is full, create a mallocated string to
+// hold it, store the return value of a new recursive
+// call to get_next_line, concatenate them, free extra
+// space and return the complete line.
+
+// If no new line is found return whatever is found
+// when encountering EOF
+
+static char	*flush_till_index(t_buffer *buffer, size_t index);
+static void	read_into_buffer(t_buffer *buffer);
+static char	*store_buffer_and_append_next_line(t_buffer *buffer);
+static void	move_buffer_back(char *buffer, size_t offset);
 
 char	*get_next_line(int fd)
 {
-	static t_buffer_list	buffer_list;
-	t_buffer				*buffer;
-	t_buffer				*temp;
-	ssize_t					new_line_index;
+	static t_buffer	buffer;
+	char			*next_line;
+	char			*storage;
+	ssize_t			newline_index;
 
-	buffer = buffer_list.last;
-	if (!buffer->bytes_used)
-		buffer->bytes_used = read(buffer_list.fd, buffer->memory, BUFFER_SIZE);
-	if (buffer->bytes_used <= 0)
-		return (free_buffer_list(&buffer_list));
-	new_line_index = char_index(buffer->memory, '\n');
-	if (new_line_index != -1)
-		return (flush_till_newline(&buffer_list));
-	if (buffer->bytes_used < BUFFER_SIZE)
+	if (!buffer.fd)
+		buffer.fd = fd;
+	newline_index = char_index(buffer.memory, '\n');
+	if (newline_index != -1)
+		return (flush_till_index(&buffer, newline_index + 1));
+	if (buffer.eof)
+		return (flush_till_index(&buffer, buffer.bytes_used));
+	if (buffer.bytes_used < BUFFER_SIZE)
 	{
-		buffer->bytes_used += read(fd, buffer->memory + buffer->bytes_used,
-				BUFFER_SIZE - buffer->bytes_used);
+		read_into_buffer(&buffer);
 		return (get_next_line(fd));
 	}
-	if (buffer->bytes_used == BUFFER_SIZE)
-		return (extend_buffer(&buffer_list));
+	if (buffer.bytes_used == BUFFER_SIZE)
+		return (store_buffer_and_append_next_line(&buffer));
 	return (NULL);
 }
 
-char	*flush_till_newline(t_buffer_list *buffer_list_pointer)
+static char	*store_buffer_and_append_next_line(t_buffer *buffer)
 {
-	size_t		line_len;
-	t_buffer	*temp;
-	char		*line;
-	
-	line_len = 0;
-	temp = buffer_list_pointer->first->next_buffer;
-	while (temp)
-	{
-		line_len += temp->bytes_used;
-		temp = temp->next_buffer;
-	}
-	line = malloc((line_len + 1) * sizeof(char));
-	if (!line)
-	{
-		free_buffer_list(buffer_list_pointer);
+	char	*storage;
+	char	*next_line;
+
+	storage = flush_till_index(buffer, buffer->bytes_used);
+	if (!storage)
 		return (NULL);
-	}
-	line[0] = '\0';
-	temp = buffer_list_pointer->first;
-	while (temp)
+	next_line = get_next_line(buffer->fd);
+	if (!next_line)
+		return (free_ptr(storage));
+	return (strjoin_and_free(next_line, storage));
+}
+
+static void	read_into_buffer(t_buffer *buffer)
+{
+	ssize_t	bytes_read;
+
+	bytes_read = read(
+			buffer->fd,
+			buffer->memory + buffer->bytes_used,
+			BUFFER_SIZE - buffer->bytes_used);
+	buffer->bytes_used += bytes_read;
+	if (buffer->bytes_used != BUFFER_SIZE)
+		buffer->eof = 1;
+}
+
+static void	move_buffer_back(char *buffer, size_t offset)
+{
+	size_t	i;
+
+	i = 0;
+	while (i < BUFFER_SIZE - offset)
 	{
-		ft_strlcat(line, temp->memory, temp->bytes_used + 1);
-		temp = temp->next_buffer;
+		buffer[i] = buffer[offset + i];
+		i++;
 	}
-	return (line);
+	i = BUFFER_SIZE - offset;
+	while (i < BUFFER_SIZE)
+		buffer[i++] = '\0';
+}
+
+static char	*flush_till_index(t_buffer *buffer, size_t index)
+{
+	char	*next_line;
+
+	if (!(buffer->memory)[0])
+		return (NULL);
+	next_line = malloc((index + 1) * sizeof(char));
+	if (!next_line)
+		return (NULL);
+	ft_memmove(next_line, buffer->memory, index);
+	next_line[index] = '\0';
+	move_buffer_back(buffer->memory, index);
+	return (next_line);
 }

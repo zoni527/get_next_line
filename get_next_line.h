@@ -6,7 +6,7 @@
 /*   By: jvarila <jvarila@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 14:37:22 by jvarila           #+#    #+#             */
-/*   Updated: 2024/11/20 16:09:04 by jvarila          ###   ########.fr       */
+/*   Updated: 2024/11/21 13:07:30 by jvarila          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,23 +22,17 @@
 
 typedef struct s_buffer
 {
-	ssize_t			bytes_used;
-	char			memory[BUFFER_SIZE];
-	struct s_buffer	*next_buffer;
-}	t_buffer;
-
-typedef struct c_buffer_list
-{
 	int			fd;
-	t_buffer	*first;
-	t_buffer	*last;
-}	t_buffer_list;
+	int			eof;
+	ssize_t		bytes_used;
+	char		memory[BUFFER_SIZE];
+}	t_buffer;
 
 ssize_t	char_index(const char *buffer, char c);
 size_t	ft_strlen(const char *str);
-char	*flush_till_newline(t_buffer_list *buffer_list_pointer);
 char	*get_next_line(int fd);
-void	*free_buffer_list(t_buffer_list *buffer_list_pointer);
-char	*extend_buffer(t_buffer_list *lst);
+void	*ft_memmove(void *dest, const void *src, size_t n);
+void	*free_ptr(void *ptr);
+char	*strjoin_and_free(char *s1, char *s2);
 
 #endif

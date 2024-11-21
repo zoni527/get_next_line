@@ -6,58 +6,84 @@
 /*   By: jvarila <jvarila@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 20:04:49 by jvarila           #+#    #+#             */
-/*   Updated: 2024/11/20 21:02:17 by jvarila          ###   ########.fr       */
+/*   Updated: 2024/11/21 13:10:00 by jvarila          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
+void	*free_ptr(void *ptr)
+{
+	free(ptr);
+	return (NULL);
+}
+
 ssize_t	char_index(const char *buffer, char c)
 {
-	ssize_t	i;
+	size_t	i;
 
-	i = -1;
+	i = 0;
 	while (buffer[++i])
+	{
 		if (buffer[i] == c)
 			return (i);
+		i++;
+	}
 	if (c == '\0')
 		return (i);
 	return (-1);
 }
 
-void	*free_buffer_list(t_buffer_list *lst_ptr)
+char	*strjoin_and_free(char *s1, char *s2)
 {
-	t_buffer	*temp;
-	t_buffer	*to_free;
-	size_t		i;
+	size_t	len1;
+	size_t	combined_len;
+	char	*str;
 
-	if (lst_ptr->first == lst_ptr->last)
-	{
-		i = 0;
-		while (i < BUFFER_SIZE)
-			lst_ptr->first->memory[i++] = '\0';
+	len1 = ft_strlen(s1);
+	combined_len = len1 + ft_strlen(s2);
+	str = malloc((combined_len + 1) * sizeof(char));
+	if (!str)
 		return (NULL);
-	}
-	temp = lst_ptr->first->next_buffer;
-	while (temp)
-	{
-		to_free = temp;
-		temp = temp->next_buffer;
-		free(to_free);
-	}
-	return (NULL);
+	ft_memmove(str, s1, len1);
+	ft_memmove(str + len1, s2, combined_len - len1);
+	str[combined_len] = '\0';
+	free(s1);
+	free(s2);
+	return (str);
 }
 
-char	*extend_buffer(t_buffer_list *lst)
+void	*ft_memmove(void *dest, const void *src, size_t n)
 {
-	t_buffer	*temp;
+	char		*dest_char_ptr;
+	const char	*src_char_ptr;
+	size_t		i;
 
-	lst->last = malloc(sizeof(t_buffer));
-	if (!lst->last)
-		return (free_buffer_list(lst));
-	temp = lst->first;
-	while (temp->next_buffer)
-		temp = temp->next_buffer;
-	temp->next_buffer = lst->last;
-	return (get_next_line(lst->fd));
+	if (n == 0)
+		return (dest);
+	dest_char_ptr = (char *)dest;
+	src_char_ptr = (const char *)src;
+	i = 0;
+	if (src_char_ptr < dest_char_ptr)
+		while (n-- > 0)
+			dest_char_ptr[n] = src_char_ptr[n];
+	else
+	{
+		while (i < n)
+		{
+			dest_char_ptr[i] = src_char_ptr[i];
+			i++;
+		}
+	}
+	return (dest);
+}
+
+size_t	ft_strlen(const char *s)
+{
+	size_t	len;
+
+	len = 0;
+	while (s[len])
+		len++;
+	return (len);
 }
