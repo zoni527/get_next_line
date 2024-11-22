@@ -24,11 +24,12 @@ typedef struct s_buffer
 {
 	int			fd;
 	int			eof;
-	ssize_t		bytes_used;
+	size_t		bytes_used;
+	size_t		offset;
 	char		memory[BUFFER_SIZE];
 }	t_buffer;
 
-ssize_t	char_index(const char *buffer, char c);
+ssize_t	char_index(t_buffer *buffer, char c);
 size_t	ft_strlen(const char *str);
 char	*get_next_line(int fd);
 void	*ft_memmove(void *dest, const void *src, size_t n);

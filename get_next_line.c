@@ -36,12 +36,14 @@ static void	move_buffer_back(t_buffer *buffer, size_t offset);
 
 char	*get_next_line(int fd)
 {
+	if (fd < 0)
+		return (NULL);
 	static t_buffer	buffer;
 	ssize_t			newline_index;
 
 	if (!buffer.fd)
 		buffer.fd = fd;
-	newline_index = char_index(buffer.memory, '\n');
+	newline_index = char_index(&buffer, '\n');
 	if (newline_index != -1)
 		return (flush_till_index(&buffer, newline_index + 1));
 	if (buffer.eof)
@@ -85,16 +87,14 @@ static void	read_into_buffer(t_buffer *buffer)
 
 static void	move_buffer_back(t_buffer *buffer, size_t offset)
 {
-	size_t	i;
+	size_t		bytes_to_move;
+	const char	*offset_start_position;
 
+	bytes_to_move = buffer->bytes_used - offset;
+	offset_start_position = buffer->memory + offset;
 	if (offset == 0)
 		return ;
-	i = 0;
-	while (i < buffer->bytes_used - offset)
-	{
-		buffer->memory[i] = buffer->memory[offset + i];
-		i++;
-	}
+	ft_memmove(buffer->memory, offset_start_position, bytes_to_move);
 	buffer->bytes_used -= offset;
 }
 
@@ -102,12 +102,12 @@ static char	*flush_till_index(t_buffer *buffer, size_t index)
 {
 	char	*next_line;
 
-	if (!(buffer->memory)[0])
+	if (!buffer->bytes_used || index == 0)
 		return (NULL);
 	next_line = malloc((index + 1) * sizeof(char));
 	if (!next_line)
 		return (NULL);
-	ft_memmove(next_line, buffer->memory, index);
+	ft_memmove(next_line, buffer->memory + buffer->offset, index);
 	next_line[index] = '\0';
 	move_buffer_back(buffer, index);
 	return (next_line);

@@ -18,14 +18,14 @@ void	*free_ptr(void *ptr)
 	return (NULL);
 }
 
-ssize_t	char_index(const char *buffer, char c)
+ssize_t	char_index(t_buffer *buffer, char c)
 {
 	size_t	i;
 
 	i = 0;
-	while (buffer[i])
+	while (i < buffer->bytes_used)
 	{
-		if (buffer[i] == c)
+		if (buffer->memory[i] == c)
 			return (i);
 		i++;
 	}
