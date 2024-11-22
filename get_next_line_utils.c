@@ -20,12 +20,14 @@ void	*free_ptr(void *ptr)
 
 ssize_t	char_index(t_buffer *buffer, char c)
 {
+	size_t	offset;
 	size_t	i;
 
+	offset = buffer->flushed_bytes;
 	i = 0;
-	while (i < buffer->bytes_used)
+	while (i < buffer->unflushed_bytes)
 	{
-		if (buffer->memory[i] == c)
+		if (buffer->memory[offset + i] == c)
 			return (i);
 		i++;
 	}

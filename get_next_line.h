@@ -24,9 +24,9 @@ typedef struct s_buffer
 {
 	int			fd;
 	int			eof;
-	size_t		bytes_used;
-	size_t		offset;
-	char		memory[BUFFER_SIZE];
+	size_t		flushed_bytes;
+	size_t		unflushed_bytes;
+	char		memory[BUFFER_SIZE + 1];
 }	t_buffer;
 
 ssize_t	char_index(t_buffer *buffer, char c);
