@@ -29,7 +29,58 @@
 
 static char	*flush(t_buffer *buffer, size_t bytes_to_flush);
 static void	read_into_buffer(t_buffer *buffer);
-static void	initialize(t_buffer *buffer, int fd);
+static ssize_t	get_newline_index(t_buffer *buffer);
+// static void	initialize(t_buffer *buffer, int fd);
+
+char	*get_next_line(int fd)
+{
+	static t_buffer	buffer;
+	char			*next_line;
+	char			*storage;
+	ssize_t			newline_index;
+
+	if (fd < 0)
+		return (NULL);
+	if (buffer.unflushed_bytes == 0 && buffer.flushed_bytes == 0)
+	{
+		buffer.fd = fd;
+		read_into_buffer(&buffer);
+	}
+	if (buffer.unflushed_bytes == 0 && buffer.flushed_bytes == BUFFER_SIZE)
+		read_into_buffer(&buffer);
+	newline_index = get_newline_index(&buffer);
+	if (newline_index >= 0)
+		return (flush(&buffer, newline_index + 1));
+	if (buffer.eof && newline_index < 0)
+		return (flush(&buffer, buffer.unflushed_bytes));
+	storage = flush(&buffer, buffer.unflushed_bytes);
+	if (!storage)
+		return (NULL);
+	read_into_buffer(&buffer);
+	next_line = get_next_line(buffer.fd);
+	if (!next_line)
+		return (free_ptr(storage));
+	next_line = strjoin_and_free(storage, next_line);
+	return (next_line);
+}
+
+static void	read_into_buffer(t_buffer *buffer)
+{
+	ssize_t	bytes_read;
+
+	bytes_read = read(buffer->fd, buffer->memory, BUFFER_SIZE);
+	if (bytes_read < 0)
+	{
+		buffer->eof = 1;
+		buffer->unflushed_bytes = 0;
+		buffer->flushed_bytes = BUFFER_SIZE;
+		return ;
+	}
+	buffer->unflushed_bytes = bytes_read;
+	buffer->flushed_bytes = 0;
+	if (bytes_read < BUFFER_SIZE)
+		buffer->eof = 1;
+}
 
 static ssize_t	get_newline_index(t_buffer *buffer)
 {
@@ -45,49 +96,6 @@ static ssize_t	get_newline_index(t_buffer *buffer)
 		i++;
 	}
 	return (-1);
-}
-
-char	*get_next_line(int fd)
-{
-	static t_buffer	buffer;
-	char			*next_line;
-	char			*storage;
-	ssize_t			newline_index;
-
-	if (fd < 0)
-		return (NULL);
-	if (buffer.unflushed_bytes == 0 && buffer.flushed_bytes == 0)
-		initialize(&buffer, fd);
-	newline_index = get_newline_index(&buffer);
-	if (newline_index >= 0)
-		return (flush(&buffer, newline_index + 1));
-	if (buffer.eof && newline_index == -1)
-		return (flush(&buffer, buffer.unflushed_bytes));
-	storage = flush(&buffer, buffer.unflushed_bytes);
-	if (!storage)
-		return (NULL);
-	read_into_buffer(&buffer);
-	next_line = get_next_line(fd);
-	if (!next_line)
-		return (free_ptr(storage));
-	next_line = strjoin_and_free(storage, next_line);
-	return (next_line);
-}
-
-static void	read_into_buffer(t_buffer *buffer)
-{
-	ssize_t	bytes_read;
-
-	bytes_read = read(buffer->fd, buffer->memory, BUFFER_SIZE);
-	if (bytes_read < 0)
-	{
-		buffer->eof = 1;
-		return ;
-	}
-	buffer->unflushed_bytes = bytes_read;
-	buffer->flushed_bytes = 0;
-	if (bytes_read < BUFFER_SIZE)
-		buffer->eof = 1;
 }
 
 static char	*flush(t_buffer *buffer, size_t bytes_to_flush)
@@ -116,8 +124,10 @@ static char	*flush(t_buffer *buffer, size_t bytes_to_flush)
 	return (line);
 }
 
+/*
 static void	initialize(t_buffer *buffer, int fd)
 {
 	buffer->fd = fd;
 	read_into_buffer(buffer);
 }
+*/
