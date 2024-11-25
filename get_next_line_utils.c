@@ -6,42 +6,24 @@
 /*   By: jvarila <jvarila@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 20:04:49 by jvarila           #+#    #+#             */
-/*   Updated: 2024/11/21 13:10:00 by jvarila          ###   ########.fr       */
+/*   Updated: 2024/11/25 13:56:33 by jvarila          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-void	*free_ptr(void *ptr)
-{
-	free(ptr);
-	return (NULL);
-}
-
-ssize_t	char_index(t_buffer *buffer, char c)
-{
-	size_t	offset;
-	size_t	i;
-
-	offset = buffer->flushed_bytes;
-	i = 0;
-	while (i < buffer->unflushed_bytes)
-	{
-		if (buffer->memory[offset + i] == c)
-			return (i);
-		i++;
-	}
-	if (c == '\0')
-		return (i);
-	return (-1);
-}
-
+// Function uses memmove to combine s1 and s2 and frees both pointers before
+// returning the new combined string.
 char	*strjoin_and_free(char *s1, char *s2)
 {
 	size_t	len1;
 	size_t	combined_len;
 	char	*str;
 
+	if (!s1)
+		return (s2);
+	if (!s2)
+		return (s1);
 	len1 = ft_strlen(s1);
 	combined_len = len1 + ft_strlen(s2);
 	str = malloc((combined_len + 1) * sizeof(char));

@@ -6,7 +6,7 @@
 /*   By: jvarila <jvarila@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 14:37:22 by jvarila           #+#    #+#             */
-/*   Updated: 2024/11/21 13:07:30 by jvarila          ###   ########.fr       */
+/*   Updated: 2024/11/25 14:05:03 by jvarila          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,11 @@
 # include <unistd.h>
 
 # ifndef BUFFER_SIZE
-#  define BUFFER_SIZE 5
+#  define BUFFER_SIZE 1024
+# endif
+
+# ifndef FILE_LIMIT
+#  define FILE_LIMIT 5
 # endif
 
 typedef struct s_buffer
@@ -26,14 +30,12 @@ typedef struct s_buffer
 	int			eof;
 	size_t		flushed_bytes;
 	size_t		unflushed_bytes;
-	char		memory[BUFFER_SIZE + 1];
+	char		memory[BUFFER_SIZE];
 }	t_buffer;
 
-ssize_t	char_index(t_buffer *buffer, char c);
-size_t	ft_strlen(const char *str);
 char	*get_next_line(int fd);
+size_t	ft_strlen(const char *str);
 void	*ft_memmove(void *dest, const void *src, size_t n);
-void	*free_ptr(void *ptr);
 char	*strjoin_and_free(char *s1, char *s2);
 
 #endif
