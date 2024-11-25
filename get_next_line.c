@@ -31,8 +31,6 @@ char	*get_next_line(int fd)
 	t_buffer		*buffer;
 	ssize_t			newline_index;
 
-	if (fd < 0)
-		return (NULL);
 	line = NULL;
 	buffer = NULL;
 	initialize(buffers, &buffer, fd);
@@ -46,7 +44,7 @@ char	*get_next_line(int fd)
 		if (buffer->eof && buffer->unflushed_bytes > 0)
 			return (flush_and_combine(buffer, buffer->unflushed_bytes, line));
 		if (buffer->eof && buffer->unflushed_bytes == 0)
-			return (NULL);
+			return (line);
 		line = flush_and_combine(buffer, buffer->unflushed_bytes, line);
 		read_into_buffer(buffer);
 	}
