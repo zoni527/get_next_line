@@ -74,7 +74,6 @@ static void	initialize(t_buffer *buffers, t_buffer **buffer, int fd)
 	if ((*buffer)->unflushed_bytes == 0 && (*buffer)->flushed_bytes == 0)
 		read_into_buffer(*buffer);
 }
-
 // Attempts to fill buffer. If read fails or goes past eof mark buffer as
 // completely flushed and assign eof. If read succeeds assign bytes_read,
 // set unflushed_bytes to 0 and assign eof if less bytes than BUFFER_SIZE
@@ -123,7 +122,7 @@ static char	*flush_and_combine(t_buffer *buff, size_t to_flush, char *line)
 	char	*temp;
 	size_t	offset;
 
-	if (buff->unflushed_bytes == 0 || to_flush == 0)
+	if (!buff || buff->unflushed_bytes == 0 || to_flush == 0)
 		return (NULL);
 	if (to_flush > buff->unflushed_bytes)
 		to_flush = buff->unflushed_bytes;
