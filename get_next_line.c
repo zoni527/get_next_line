@@ -74,6 +74,7 @@ static void	initialize(t_buffer *buffers, t_buffer **buffer, int fd)
 	if ((*buffer)->unflushed_bytes == 0 && (*buffer)->flushed_bytes == 0)
 		read_into_buffer(*buffer);
 }
+
 // Attempts to fill buffer. If read fails or goes past eof mark buffer as
 // completely flushed and assign eof. If read succeeds assign bytes_read,
 // set unflushed_bytes to 0 and assign eof if less bytes than BUFFER_SIZE
