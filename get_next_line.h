@@ -21,7 +21,7 @@
 # endif
 
 # ifndef FILE_LIMIT
-#  define FILE_LIMIT 5
+#  define FILE_LIMIT 10
 # endif
 
 typedef struct s_buffer
