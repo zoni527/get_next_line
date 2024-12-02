@@ -1,17 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jvarila <jvarila@student.hive.fi>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/20 11:47:36 by jvarila           #+#    #+#             */
-/*   Updated: 2024/11/27 16:38:25 by jvarila          ###   ########.fr       */
+/*   Updated: 2024/11/27 16:39:07 by jvarila          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
+static void		initialize(t_buffer *buffers, t_buffer **buffer, int fd);
 static void		read_into_buffer(t_buffer *buffer);
 static ssize_t	get_newline_index(t_buffer *buffer);
 static char		*flush_and_combine(t_buffer *buff, size_t to_flush, char *line);
@@ -25,28 +26,53 @@ static char		*flush_and_combine(t_buffer *buff, size_t to_flush, char *line);
 // appending and read new data into the buffer memory, starting the loop anew.
 char	*get_next_line(int fd)
 {
-	static t_buffer	buffer;
+	static t_buffer	buffers[FILE_LIMIT];
 	char			*line;
+	t_buffer		*buffer;
 	ssize_t			newline_index;
 
 	line = NULL;
-	if (buffer.unflushed_bytes == 0 && buffer.flushed_bytes == 0)
-	{
-		buffer.fd = fd;
-		read_into_buffer(&buffer);
-	}
+	buffer = NULL;
+	initialize(buffers, &buffer, fd);
+	if (!buffer)
+		return (NULL);
 	while (1)
 	{
-		newline_index = get_newline_index(&buffer);
+		newline_index = get_newline_index(buffer);
 		if (newline_index >= 0)
-			return (flush_and_combine(&buffer, newline_index + 1, line));
-		if (buffer.eof && buffer.unflushed_bytes > 0)
-			return (flush_and_combine(&buffer, buffer.unflushed_bytes, line));
-		if (buffer.eof && buffer.unflushed_bytes == 0)
+			return (flush_and_combine(buffer, newline_index + 1, line));
+		if (buffer->eof && buffer->unflushed_bytes > 0)
+			return (flush_and_combine(buffer, buffer->unflushed_bytes, line));
+		if (buffer->eof && buffer->unflushed_bytes == 0)
 			return (line);
-		line = flush_and_combine(&buffer, buffer.unflushed_bytes, line);
-		read_into_buffer(&buffer);
+		line = flush_and_combine(buffer, buffer->unflushed_bytes, line);
+		read_into_buffer(buffer);
 	}
+}
+
+// Check if a buffer with fd already exists, initialize if necessary. If it
+// doesn't exist find an unitialized member, link it to buffer and initialize.
+static void	initialize(t_buffer *buffers, t_buffer **buffer, int fd)
+{
+	size_t	i;
+
+	i = 0;
+	while (i < FILE_LIMIT)
+	{
+		if (buffers[i].fd == fd)
+			break ;
+		if (buffers[i].flushed_bytes == 0 && buffers[i].unflushed_bytes == 0)
+		{
+			buffers[i].fd = fd;
+			break ;
+		}
+		i++;
+	}
+	if (i == FILE_LIMIT)
+		return ;
+	(*buffer) = &buffers[i];
+	if ((*buffer)->unflushed_bytes == 0 && (*buffer)->flushed_bytes == 0)
+		read_into_buffer(*buffer);
 }
 
 // Attempts to fill buffer. If read fails or goes past eof mark buffer as
